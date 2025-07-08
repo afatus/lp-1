@@ -1,29 +1,20 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
 import { google } from 'googleapis';
 
-// CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
+// Load environment variables
+dotenv.config();
 
-export default async function handler(req, res) {
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return res.status(200).setHeader('Access-Control-Allow-Origin', '*')
-      .setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-      .end();
-  }
+const app = express();
+const PORT = process.env.PORT || 3001;
 
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      message: 'Method not allowed',
-      success: false 
-    });
-  }
+// Middleware
+app.use(cors());
+app.use(express.json());
 
+// Contact form endpoint
+app.post('/api/contact', async (req, res) => {
   try {
     const { fullName, email, phone, companyName, employeeCount } = req.body;
 
@@ -66,7 +57,7 @@ export default async function handler(req, res) {
     if (!SPREADSHEET_ID || !credentials.private_key || !credentials.client_email) {
       console.log('Google Sheets not configured, storing locally');
       
-      // Fallback: Log the data (you can access this in your deployment logs)
+      // Fallback: Log the data
       const submissionData = {
         fullName,
         email,
@@ -177,4 +168,18 @@ export default async function handler(req, res) {
       success: false 
     });
   }
-}
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log('Environment variables loaded:');
+  console.log('- GOOGLE_SPREADSHEET_ID:', process.env.GOOGLE_SPREADSHEET_ID ? 'Set' : 'Not set');
+  console.log('- GOOGLE_CLIENT_EMAIL:', process.env.GOOGLE_CLIENT_EMAIL ? 'Set' : 'Not set');
+  console.log('- GOOGLE_PRIVATE_KEY:', process.env.GOOGLE_PRIVATE_KEY ? 'Set' : 'Not set');
+});
