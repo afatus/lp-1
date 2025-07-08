@@ -69,6 +69,27 @@ const ContactForm = () => {
     setSubmitStatus('idle');
 
     try {
+      // Development fallback - if we're in development and API is not available
+      if (import.meta.env.DEV) {
+        console.log('=== DEVELOPMENT: FORM SUBMISSION ===');
+        console.log('Form Data:', formData);
+        console.log('Timestamp:', new Date().toISOString());
+        console.log('=== END FORM SUBMISSION ===');
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setSubmitStatus('success');
+        setFormData({
+          fullName: '',
+          email: '',
+          phone: '',
+          companyName: '',
+          employeeCount: ''
+        });
+        return;
+      }
+
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
