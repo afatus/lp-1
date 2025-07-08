@@ -77,7 +77,22 @@ const ContactForm = () => {
         body: JSON.stringify(formData),
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('JSON parsing error:', jsonError);
+        console.error('Response status:', response.status);
+        console.error('Response headers:', response.headers);
+        // Try to get the raw response text for debugging
+        try {
+          const responseText = await response.text();
+          console.error('Raw response:', responseText);
+        } catch (textError) {
+          console.error('Could not read response text:', textError);
+        }
+        throw new Error('Server returned invalid JSON response');
+      }
 
       if (response.ok && result.success) {
         setSubmitStatus('success');
